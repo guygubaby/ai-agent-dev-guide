@@ -32,7 +32,6 @@ export default defineConfig({
           items: [
             { text: '技术栈', link: '/reference/stack' },
             { text: '上线检查', link: '/reference/checklist' },
-            { text: '部署', link: '/deployment' },
           ],
         },
       ],
