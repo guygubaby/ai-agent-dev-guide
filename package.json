@@ -1,35 +1,21 @@
 {
   "name": "ai-agent-dev-guide",
+  "private": true,
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro",
-    "check": "astro check",
-    "deploy": "pnpm build && wrangler deploy",
-    "deploy:dry-run": "pnpm build && wrangler deploy --dry-run"
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview",
+    "check": "tsc --noEmit",
+    "deploy": "pnpm run build && wrangler deploy",
+    "deploy:dry-run": "pnpm run build && wrangler deploy --dry-run"
   },
   "engines": {
     "node": ">=22.12.0"
   },
-  "dependencies": {
-    "@astrojs/sitemap": "^3.7.4",
-    "@astrojs/starlight": "^0.42.0",
-    "@astrojs/vue": "^7.0.2",
-    "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.10",
-    "lucide-vue-next": "^1.0.0",
-    "motion-v": "^2.4.2",
-    "pinia": "^4.0.3",
-    "sharp": "^0.35.3",
-    "tailwindcss": "^4.3.3",
-    "vue": "^3.5.42"
-  },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@rspress/core": "^2.0.0",
     "typescript": "^6.0.3",
     "wrangler": "^4.130.0"
   }

@@ -1,0 +1,24 @@
+:root {
+  --rp-c-brand: #1677ff;
+  --rp-c-brand-light: #4096ff;
+  --rp-c-brand-lighter: #69b1ff;
+  --rp-c-brand-dark: #0958d9;
+  --rp-c-brand-darker: #003eb3;
+}
+
+.rspress-doc {
+  text-wrap: pretty;
+}
+
+.rspress-doc p,
+.rspress-doc li {
+  max-width: 78ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

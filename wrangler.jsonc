@@ -4,7 +4,7 @@
   "compatibility_date": "2026-09-10",
   "workers_dev": true,
   "assets": {
-    "directory": "./dist",
+    "directory": "./doc_build",
     "not_found_handling": "404-page"
   },
   "routes": [
