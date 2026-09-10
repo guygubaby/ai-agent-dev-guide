@@ -48,7 +48,7 @@ apply_patch({ path, value })
 
 ## 先读后写
 
-工具多时，不要每一步都把全部 schema 发给模型：
+工具多时，不要每一步都把全部 schema 发给模型。注册完整工具集，但每一步只通过 `activeTools` 暴露当前需要的子集：
 
 ```ts
 prepareStep: ({ steps }) => ({
@@ -59,6 +59,8 @@ prepareStep: ({ steps }) => ({
 ```
 
 第一步只开放读取工具；读到对应领域后再开放写工具。这样既减少 token，也降低误选工具的概率。
+
+完整的分组、解锁、跨领域和危险操作规则见[工具设计规范](/guide/tool-design)。
 
 ## 统一结果格式
 

@@ -22,6 +22,7 @@ export default defineConfig({
             { text: '先理解 Agent', link: '/guide/' },
             { text: '最小实现', link: '/guide/quick-start' },
             { text: 'Context 与 Tools', link: '/guide/context-and-tools' },
+            { text: '工具设计规范', link: '/guide/tool-design' },
             { text: '安全边界', link: '/guide/safety' },
             { text: '体验与性能', link: '/guide/ux-and-performance' },
           ],
