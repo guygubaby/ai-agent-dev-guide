@@ -13,7 +13,7 @@ pnpm dev
 
 ```bash
 pnpm build
-pnpm deploy
+pnpm run deploy
 ```
 
 生产地址：<https://ai-agent-dev-guide.guygubaby.top>

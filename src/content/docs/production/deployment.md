@@ -35,7 +35,7 @@ Astro 是多页面站点，因此使用 `404-page`，不要使用 SPA 的 `singl
 ```bash
 pnpm build
 pnpm exec wrangler whoami
-pnpm exec wrangler deploy
+pnpm run deploy
 ```
 
 Wrangler 会上传静态资产并发布 Worker。`custom_domain: true` 要求 `guygubaby.top` 位于当前 Cloudflare 账户的 active zone；目标 hostname 不能已有冲突的 CNAME。Cloudflare 会创建路由/DNS 并签发证书。
@@ -45,7 +45,7 @@ Wrangler 会上传静态资产并发布 Worker。`custom_domain: true` 要求 `g
 <Steps>
 1. 运行 `pnpm check && pnpm build`，确认所有 Markdown 链接和 Vue island 可构建。
 2. 用 `wrangler whoami` 确认登录账户包含目标 zone。
-3. 首次执行 `wrangler deploy`，记录 workers.dev URL 和版本 ID。
+3. 首次执行 `pnpm run deploy`，记录 workers.dev URL 和版本 ID。
 4. 等待自定义域名证书激活，再访问 HTTPS 地址。
 5. 使用 `curl -I` 和浏览器分别确认状态码、标题、CSS、客户端 island 与 404 页面。
 6. 推送 GitHub；如需每次 push 自动部署，再在 Workers Builds 连接仓库。
