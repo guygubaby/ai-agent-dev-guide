@@ -13,7 +13,10 @@ export default defineConfig({
     nav: [
       { text: '核心指南', link: '/guide/' },
       { text: '技术参考', link: '/reference/stack' },
-      { text: 'llms.txt', link: '/llms.txt' },
+      {
+        text: 'llms.txt',
+        link: 'https://ai-agent-dev-guide.guygubaby.top/llms.txt',
+      },
     ],
     sidebar: {
       '/': [
