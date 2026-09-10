@@ -1,6 +1,6 @@
 ---
 title: 技术栈
-description: 构建纯前端 AI Agent 和本指南站点所需的最小库。
+description: 构建纯前端 AI Agent 所需的最小库。
 ---
 
 # 技术栈
@@ -27,14 +27,3 @@ description: 构建纯前端 AI Agent 和本指南站点所需的最小库。
 | `Uppy` | 需要文件上传时统一进度、取消和重试 |
 
 这些都是可选能力，不要在最小版本一次性安装。
-
-## 本指南站点
-
-本站使用 [Rspress](https://rspress.rs/zh/)：
-
-- 默认 SSG，文档构建为静态 HTML。
-- Markdown、搜索、导航和暗色主题开箱即用。
-- 构建产物位于 `doc_build`。
-- 通过 Cloudflare Workers Static Assets 发布。
-
-Rspress 的 `llms` 输出已开启，会同时生成 `llms.txt` 与便于模型读取的 Markdown 版本。
