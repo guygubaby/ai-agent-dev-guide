@@ -1,0 +1,82 @@
+---
+title: 部署到 Cloudflare
+description: 构建 Astro 静态指南，使用 Workers Static Assets 部署并绑定自定义域名。
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+
+本指南站使用 Astro + Starlight 静态输出。Cloudflare Workers Static Assets 可以直接在边缘托管 `dist`，无需 SSR adapter。
+
+## Wrangler 配置
+
+```jsonc title="wrangler.jsonc"
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ai-agent-dev-guide",
+  "compatibility_date": "2026-09-10",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    {
+      "pattern": "ai-agent-dev-guide.guygubaby.top",
+      "custom_domain": true
+    }
+  ]
+}
+```
+
+Astro 是多页面站点，因此使用 `404-page`，不要使用 SPA 的 `single-page-application` fallback。
+
+## 部署命令
+
+```bash
+pnpm build
+pnpm exec wrangler whoami
+pnpm exec wrangler deploy
+```
+
+Wrangler 会上传静态资产并发布 Worker。`custom_domain: true` 要求 `guygubaby.top` 位于当前 Cloudflare 账户的 active zone；目标 hostname 不能已有冲突的 CNAME。Cloudflare 会创建路由/DNS 并签发证书。
+
+## 完整流程
+
+<Steps>
+1. 运行 `pnpm check && pnpm build`，确认所有 Markdown 链接和 Vue island 可构建。
+2. 用 `wrangler whoami` 确认登录账户包含目标 zone。
+3. 首次执行 `wrangler deploy`，记录 workers.dev URL 和版本 ID。
+4. 等待自定义域名证书激活，再访问 HTTPS 地址。
+5. 使用 `curl -I` 和浏览器分别确认状态码、标题、CSS、客户端 island 与 404 页面。
+6. 推送 GitHub；如需每次 push 自动部署，再在 Workers Builds 连接仓库。
+</Steps>
+
+## GitHub
+
+```bash
+git init
+git add .
+git commit -m "docs: publish AI Agent development guide"
+git branch -M main
+git remote add origin git@github.com:guygubaby/ai-agent-dev-guide.git
+git push -u origin main
+```
+
+不要提交 `.env`、`.dev.vars`、API Key 或供应商响应样本中的敏感数据。
+
+## 如果以后增加在线 Agent Demo
+
+静态指南本身不需要服务端。如果站内新增可实际调用模型的 Demo：
+
+- BYOK 模式可继续纯前端，但清楚告知 Key 的保存位置。
+- 共享 Key 使用 Worker Secret，并把模型 stream 从 Worker 代理给浏览器。
+- 不要把 Secret 写在 `wrangler.jsonc` 的 `vars` 中。
+- DOM/Store 类工具留在客户端；Worker 只返回/转发 tool call，不要尝试操作浏览器状态。
+
+<Aside type="note" title="静态站和 Agent 架构是两件事">
+本站部署到 Cloudflare 只负责发布文档。指南描述的“纯前端 Agent”运行在使用者自己的产品中，不需要本站提供 Agent 服务。
+</Aside>
+
+## 回滚
+
+Cloudflare 保留 Worker 版本，可在 Dashboard 或 Wrangler 版本命令中回滚；GitHub main 保留文档历史。部署前先构建，发布后验证自定义域名，避免把“上传成功”误判为“用户可以访问”。
