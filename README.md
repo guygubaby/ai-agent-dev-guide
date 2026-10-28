@@ -1,6 +1,6 @@
-# AI Agent 开发指南
+# AI 开发实践
 
-一份简洁、通用的纯前端 AI Agent 实现指南，使用 Rspress 构建并部署到 Cloudflare Workers Static Assets。
+记录 AI 应用开发中的工程实践、架构取舍与真实实现案例，使用 Rspress 构建并部署到 Cloudflare Workers Static Assets。
 
 ## 使用
 

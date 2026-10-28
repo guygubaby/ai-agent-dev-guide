@@ -1,17 +1,20 @@
 import { defineConfig } from '@rspress/core';
+import mermaid from 'rspress-plugin-mermaid';
 
 export default defineConfig({
   root: 'docs',
-  title: 'AI Agent 开发指南',
-  description: '用最短路径理解并实现一个纯前端 AI Agent。',
+  title: 'AI 开发实践',
+  description: '记录 AI 应用开发中的工程实践、架构取舍与真实实现案例。',
   icon: '/favicon.svg',
   lang: 'zh',
   ssg: true,
   llms: true,
+  plugins: [mermaid()],
   globalStyles: new URL('./styles/global.css', import.meta.url).pathname,
   themeConfig: {
     nav: [
-      { text: '核心指南', link: '/guide/' },
+      { text: '开发指南', link: '/guide/' },
+      { text: '案例', link: '/reference/browser-use' },
       { text: '技术参考', link: '/reference/stack' },
       {
         text: 'llms.txt',
@@ -21,7 +24,7 @@ export default defineConfig({
     sidebar: {
       '/': [
         {
-          text: '核心指南',
+          text: 'Agent 开发',
           items: [
             { text: '先理解 Agent', link: '/guide/' },
             { text: '最小实现', link: '/guide/quick-start' },
@@ -29,6 +32,12 @@ export default defineConfig({
             { text: '工具设计规范', link: '/guide/tool-design' },
             { text: '安全边界', link: '/guide/safety' },
             { text: '体验与性能', link: '/guide/ux-and-performance' },
+          ],
+        },
+        {
+          text: '案例',
+          items: [
+            { text: 'Browser Use 实现', link: '/reference/browser-use' },
           ],
         },
         {
