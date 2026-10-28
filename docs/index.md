@@ -11,7 +11,7 @@ hero:
       text: 开始阅读
       link: /guide/
     - theme: alt
-      text: 浏览器能力
+      text: Browser Use
       link: /topics/browser-use
 features:
   - title: 最小实现
@@ -20,6 +20,6 @@ features:
     details: 渐进式发现、运行时校验与统一结果格式。
   - title: 安全与边界
     details: 权限、取消、超时和不可逆操作由代码约束，而不是提示词。
-  - title: 浏览器能力
-    details: 从配对到命令协议，拆解浏览器扩展执行链。
+  - title: Browser Use
+    details: 从配对到命令协议，拆解完整的 Browser Use 执行链。
 ---

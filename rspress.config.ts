@@ -14,7 +14,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: '开发指南', link: '/guide/' },
-      { text: '专题', link: '/topics/browser-use' },
+      { text: 'Browser Use', link: '/topics/browser-use' },
       { text: '技术参考', link: '/reference/stack' },
       {
         text: 'llms.txt',
@@ -37,7 +37,7 @@ export default defineConfig({
         {
           text: '专题',
           items: [
-            { text: '浏览器能力实现', link: '/topics/browser-use' },
+            { text: 'Browser Use', link: '/topics/browser-use' },
           ],
         },
         {
