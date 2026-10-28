@@ -32,6 +32,24 @@ flowchart LR
 - 每次调用由服务端补全任务身份，模型不能自己指定 owner 或 turn。
 - 授权、取消和超时由代码执行，不靠提示词约束。
 
+## 技术栈
+
+| 层 | 选择 | 用途 |
+| --- | --- | --- |
+| 浏览器扩展 | Manifest V3 + TypeScript | 权限声明、Service Worker、内容脚本 |
+| 调试协议 | Chrome DevTools Protocol（`chrome.debugger`） | 快照、点击、输入 |
+| 打包 | esbuild，target `chrome127` | 把 TypeScript 打成可直接加载的扩展 |
+| 服务端 | Node.js + Hono（或任意 WebSocket 服务） | 配对、鉴权、命令转发 |
+| 共享校验 | Zod | 请求和回包的运行时校验 |
+| 状态（可选） | Redis | 跨实例的连接、锁和短期命令 |
+| Agent 工具 | `ai` 的 `tool()` | 把动作暴露给模型 |
+
+分工：
+
+- 扩展只执行，不做决策。
+- 服务端不碰 CDP，只做鉴权和转发。
+- 协议共享一份 Zod schema，前后端类型同源。
+
 ## 扩展组成
 
 | 文件 | 作用 |
@@ -215,12 +233,194 @@ type BrowserResult<T> =
 
 不要用“多点几次提交”“自动换执行端”或“重建任务”掩盖授权和不确定副作用问题。
 
-## 最小实现路线
+## 最小实现
 
-1. 定义工具 schema、动作集和统一结果格式。
+下面是最小可运行骨架，省略配对、鉴权和重连。完整流程见前文各节。
+
+### 1. 共享协议
+
+```ts
+// shared/browser.ts
+import { z } from 'zod';
+
+export const browserCommandSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('status') }),
+  z.object({ action: z.literal('tabs') }),
+  z.object({ action: z.literal('snapshot'), tab_id: z.number().int() }),
+  z.object({ action: z.literal('click'), tab_id: z.number().int(), ref: z.string().max(200) }),
+  z.object({ action: z.literal('type'), tab_id: z.number().int(), text: z.string().max(8000) }),
+]);
+
+export type BrowserCommand = z.infer<typeof browserCommandSchema>;
+```
+
+### 2. Manifest
+
+```json
+{
+  "manifest_version": 3,
+  "name": "Browser Use Bridge",
+  "version": "0.1.0",
+  "minimum_chrome_version": "127",
+  "permissions": ["debugger", "storage", "activeTab", "scripting"],
+  "host_permissions": ["https://*/*", "http://*/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_popup": "popup.html" }
+}
+```
+
+`host_permissions` 只是声明能力，实际能操作哪些页面由标签页授权决定。
+
+### 3. 扩展后台
+
+```ts
+// background.ts
+let socket: WebSocket | undefined;
+
+function connect(token: string) {
+  socket = new WebSocket('wss://example.com/api/browser/socket');
+
+  socket.onopen = () => socket?.send(JSON.stringify({ token }));
+
+  socket.onmessage = async (event) => {
+    const message = JSON.parse(event.data);
+    if (message.type !== 'command') return;
+
+    const result = await execute(message.request);
+    socket?.send(JSON.stringify({ id: message.id, result }));
+  };
+}
+
+async function execute(command: BrowserCommand) {
+  if (command.action === 'status') return { ok: true, data: { connected: true } };
+
+  if (command.action === 'tabs') {
+    const tabs = await chrome.tabs.query({});
+    return { ok: true, data: tabs.map(({ id, title, url }) => ({ id, title, url })) };
+  }
+
+  if (command.action === 'snapshot') {
+    return { ok: true, data: await snapshot(command.tab_id) };
+  }
+
+  if (command.action === 'click') {
+    await click(command.tab_id, command.ref);
+    return { ok: true, data: { clicked: true } };
+  }
+
+  return { ok: false, code: 'UNSUPPORTED' };
+}
+```
+
+### 4. 快照与点击
+
+```ts
+async function attach(tabId: number) {
+  try {
+    await chrome.debugger.attach({ tabId }, '1.3');
+  } catch {
+    // 已经连接
+  }
+}
+
+async function snapshot(tabId: number) {
+  await attach(tabId);
+
+  const { frameTree } = await chrome.debugger.sendCommand({ tabId }, 'Page.getFrameTree');
+  const { nodes } = await chrome.debugger.sendCommand({ tabId }, 'Accessibility.getFullAXTree');
+
+  return {
+    elements: nodes
+      .filter((node: any) => node.backendDOMNodeId && node.name?.value)
+      .slice(0, 200)
+      .map((node: any) => ({
+        ref: `${frameTree.frame.loaderId}:${node.backendDOMNodeId}`,
+        role: node.role?.value,
+        name: node.name?.value,
+      })),
+  };
+}
+
+async function click(tabId: number, ref: string) {
+  await attach(tabId);
+
+  const [loaderId, nodeId] = ref.split(':');
+  const { frameTree } = await chrome.debugger.sendCommand({ tabId }, 'Page.getFrameTree');
+  if (frameTree.frame.loaderId !== loaderId) throw new Error('STALE_REF');
+
+  const { model } = await chrome.debugger.sendCommand({ tabId }, 'DOM.getBoxModel', {
+    backendNodeId: Number(nodeId),
+  });
+  const x = (model.content[0] + model.content[2]) / 2;
+  const y = (model.content[1] + model.content[5]) / 2;
+
+  for (const type of ['mousePressed', 'mouseReleased'] as const) {
+    await chrome.debugger.sendCommand({ tabId }, 'Input.dispatchMouseEvent', {
+      type,
+      x,
+      y,
+      button: 'left',
+      clickCount: 1,
+    });
+  }
+}
+```
+
+### 5. 服务端工具与命令转发
+
+```ts
+// server/browser-tool.ts
+import { tool } from 'ai';
+import { z } from 'zod';
+
+export const browserTool = tool({
+  description: '读取或操作已授权的浏览器标签页。先 status，再 tabs。',
+  inputSchema: z.object({
+    action: z.enum(['status', 'tabs', 'snapshot', 'click', 'type']),
+    tab_id: z.number().int().optional(),
+    ref: z.string().max(200).optional(),
+    text: z.string().max(8000).optional(),
+  }),
+  execute: async (input) => {
+    // 实际实现：按当前任务查出该用户的扩展连接
+    return sendToExtension(input);
+  },
+});
+
+let connection: WebSocket; // WebSocket 握手成功后赋值
+const pending = new Map<string, (result: unknown) => void>();
+
+function sendToExtension(request: BrowserCommand) {
+  const id = crypto.randomUUID();
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error('TIMEOUT'));
+    }, 30_000);
+
+    pending.set(id, (result) => {
+      clearTimeout(timer);
+      resolve(result);
+    });
+
+    connection.send(JSON.stringify({ type: 'command', id, request }));
+  });
+}
+
+// WebSocket 收到扩展回包时
+function onReply(message: { id: string; result: unknown }) {
+  pending.get(message.id)?.(message.result);
+  pending.delete(message.id);
+}
+```
+
+### 落地顺序
+
+1. 定义协议和统一结果格式。
 2. 做一个 Manifest V3 扩展和一次性配对码。
 3. 服务端建立 WebSocket 转发和标签页授权记录。
-4. 先实现 `status`、`tabs`、`snapshot`、`click`、`type` 五个动作。
+4. 先实现 `status`、`tabs`、`snapshot`、`click`、`type`。
 5. 加取消、超时、连接代际校验和错误码。
 6. 为只读任务限制动作集。
 7. 用真实页面验证导航后引用失效、断线重连和并发占用。
