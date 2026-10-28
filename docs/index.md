@@ -11,8 +11,8 @@ hero:
       text: 开始阅读
       link: /guide/
     - theme: alt
-      text: 真实案例
-      link: /reference/browser-use
+      text: 浏览器能力
+      link: /topics/browser-use
 features:
   - title: 最小实现
     details: 先跑通读取 Context、调用工具、返回结果的完整循环。
@@ -20,6 +20,6 @@ features:
     details: 渐进式发现、运行时校验与统一结果格式。
   - title: 安全与边界
     details: 权限、取消、超时和不可逆操作由代码约束，而不是提示词。
-  - title: 真实案例
-    details: 从源码拆解云端与本机浏览器两条执行链。
+  - title: 浏览器能力
+    details: 从架构到协议，拆解云端与本机两条执行链。
 ---
